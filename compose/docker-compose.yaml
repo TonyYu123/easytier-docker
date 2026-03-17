@@ -43,6 +43,11 @@ services:
       # Web 服务日志级别 
       # 默认: warn - 可选: [off | error | warn | info | debug | trace] 
       - WEB_LOG_LEVEL=warn
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    devices:
+      - /dev/net/tun:/dev/net/tun
     volumes:
       - ./data:/app/data
     # 如果启用了 Web 且设置了用户名, 不用设置 command, 直接用 Web 控制台管理

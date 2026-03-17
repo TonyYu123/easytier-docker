@@ -16,10 +16,9 @@
 # 镜像说明: https://hub.docker.com/r/majosissi/easytier
 services:
   easytier:
-    # 可选镜像
-    # majosissi/easytier:latest  最新 release 正式版
+    # majosissi/easytier:latest  最新 Release 正式版
     # majosissi/easytier:pre     最新 Pre-release 预览版
-    # majosissi/easytier:ci      最新 Action 持续集成构建版 (合并主线的版本, 自动更新, 稳定性不保证)
+    # majosissi/easytier:ci      最新 Action 构建版 (合并主线的版本, 自动更新, 稳定性不保证)
     image: majosissi/easytier:latest
     container_name: easytier
     restart: always
@@ -74,9 +73,9 @@ services:
 # 镜像说明: https://hub.docker.com/r/majosissi/easytier-web
 services:
   easytier-web:
-    # majosissi/easytier-web:latest 最新发布正式版
-    # majosissi/easytier-web:pre 最新 Pre-release 构建版
-    # majosissi/easytier-web:ci 最新 Action 构建版 (合并主线的版本, 自动更新, 稳定性不保证)
+    # majosissi/easytier:latest  最新 Release 正式版
+    # majosissi/easytier:pre     最新 Pre-release 预览版
+    # majosissi/easytier:ci      最新 Action 构建版 (合并主线的版本, 自动更新, 稳定性不保证)
     image: majosissi/easytier-web:latest
     container_name: easytier-web
     restart: always
