@@ -25,9 +25,9 @@ WEB_SERVER_PORT=${WEB_SERVER_PORT:-22020}
 WEB_SERVER_PROTOCOL=${WEB_SERVER_PROTOCOL:-udp}
 WEB_DEFAULT_API_HOST=${WEB_DEFAULT_API_HOST:-http://127.0.0.1:$WEB_API_PORT}
 WEB_LOG_LEVEL=${WEB_LOG_LEVEL:-warn}
+WEB_GEOIP_DIR=${WEB_GEOIP_DIR:-}
 WEB_DATA_DIR=/app/data
 CONFIG_DIR=/app/data/config
-WEB_GEOIP_DIR=${WEB_GEOIP_DIR:-}
 
 # Custom entrypoint command
 CORE_EXTRA_ARGS=()
@@ -40,9 +40,8 @@ if [ "$#" -gt 0 ]; then
   fi
 fi
 
-# Start Web Management Interface if enabled
 if [ "$WEB_ENABLE" = "true" ]; then
-  # Ensure necessary data and log directories exist
+  # Ensure directories exist
   mkdir -p "$WEB_DATA_DIR/logs"
   mkdir -p "$CONFIG_DIR"
   log "[Web] Starting easytier-web-embed..."
@@ -55,7 +54,7 @@ if [ "$WEB_ENABLE" = "true" ]; then
     exit 1
   fi
 
-  # Determine the API URL based on protocol presence
+  # Get API URL
   if [[ "$WEB_DEFAULT_API_HOST" == http* ]]; then
     API_URL="$WEB_DEFAULT_API_HOST"
   else
@@ -76,14 +75,12 @@ if [ "$WEB_ENABLE" = "true" ]; then
     --api-host "$API_URL"
   )
 
-  # Append GeoIP database argument if the environment variable is set
   if [ -n "$WEB_GEOIP_DIR" ]; then
     WEB_ARGS+=("--geoip-db" "$WEB_GEOIP_DIR")
   fi
 
   log "[Web] Executing command: $(format_cmd "$BINARY" "${WEB_ARGS[@]}")"
 
-  # Run the web process in the background. CORE_EXTRA_ARGS are NOT passed here.
   $BINARY "${WEB_ARGS[@]}" &
 
   WEB_PID=$!
@@ -98,8 +95,10 @@ if [ "$WEB_ENABLE" = "true" ]; then
   ARGS+=("--config-dir" "$CONFIG_DIR")
   
   if [ -n "$WEB_REMOTE_API" ]; then
+      # If WEB_REMOTE_API is set, use it directly
       ARGS+=("-w" "$WEB_REMOTE_API")
   elif [ -n "$WEB_USERNAME" ]; then
+      # Otherwise, use WEB_USERNAME if set
       ARGS+=("-w" "$WEB_SERVER_PROTOCOL://127.0.0.1:$WEB_SERVER_PORT/$WEB_USERNAME")
   fi
 fi
