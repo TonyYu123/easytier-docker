@@ -1,13 +1,10 @@
 #!/bin/bash
-# Exit immediately if a command exits with a non-zero status
 set -e
 
-# Function for logging with timestamps
 log() {
   echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
 }
 
-# Function to format commands safely for log output
 format_cmd() {
   local cmd=$1
   shift || true
@@ -18,7 +15,7 @@ format_cmd() {
   done
 }
 
-# Default configuration values
+# Default values
 WEB_ENABLE=${WEB_ENABLE:-false}
 WEB_REMOTE_API=${WEB_REMOTE_API:-}
 WEB_USERNAME=${WEB_USERNAME:-}
@@ -30,18 +27,15 @@ WEB_DEFAULT_API_HOST=${WEB_DEFAULT_API_HOST:-http://127.0.0.1:$WEB_API_PORT}
 WEB_LOG_LEVEL=${WEB_LOG_LEVEL:-warn}
 WEB_DATA_DIR=/app/data
 CONFIG_DIR=/app/data/config
-# New environment variable for GeoIP database path
 WEB_GEOIP_DIR=${WEB_GEOIP_DIR:-}
 
-# Handle positional parameters from command line (e.g., docker-compose command)
+# Custom entrypoint command
 CORE_EXTRA_ARGS=()
 if [ "$#" -gt 0 ]; then
-  # If the first argument doesn't start with '-', treat it as a custom command
   if [ "${1#-}" = "$1" ]; then
     log "[Core] Custom command detected: $*"
     exec "$@"
   else
-    # Store arguments starting with '-' as extra arguments for the core
     CORE_EXTRA_ARGS=("$@")
   fi
 fi
@@ -53,7 +47,7 @@ if [ "$WEB_ENABLE" = "true" ]; then
   mkdir -p "$CONFIG_DIR"
   log "[Web] Starting easytier-web-embed..."
   
-  # Check if the web binary is available in the system PATH
+  # Check if easytier-web-embed exists
   if command -v easytier-web-embed &> /dev/null; then
     BINARY=easytier-web-embed
   else
@@ -65,13 +59,12 @@ if [ "$WEB_ENABLE" = "true" ]; then
   if [[ "$WEB_DEFAULT_API_HOST" == http* ]]; then
     API_URL="$WEB_DEFAULT_API_HOST"
   else
-    # Default to http and append the specified API port
+    # Assume it's just an IP/Host, append port and scheme
     API_URL="http://$WEB_DEFAULT_API_HOST:$WEB_API_PORT"
   fi
   
   log "[Web] Using API URL: $API_URL"
 
-  # Construct arguments for the web process
   WEB_ARGS=(
     -d "$WEB_DATA_DIR/et.db"
     --file-log-level "$WEB_LOG_LEVEL"
@@ -99,23 +92,19 @@ fi
 
 log "[Core] Starting easytier-core..."
 
-# Construct arguments for the core process
 ARGS=()
 
 if [ "$WEB_ENABLE" = "true" ]; then
   ARGS+=("--config-dir" "$CONFIG_DIR")
   
-  # Configure web connection for the core
   if [ -n "$WEB_REMOTE_API" ]; then
-      # Connect to a remote web console if specified
       ARGS+=("-w" "$WEB_REMOTE_API")
   elif [ -n "$WEB_USERNAME" ]; then
-      # Connect to the local web console using specified username
       ARGS+=("-w" "$WEB_SERVER_PROTOCOL://127.0.0.1:$WEB_SERVER_PORT/$WEB_USERNAME")
   fi
 fi
 
-# Generate or load a persistent Machine ID for identification
+# Add machine ID if WEB_ENABLE is true or WEB_REMOTE_API is set
 if [ "$WEB_ENABLE" = "true" ] || [ -n "$WEB_REMOTE_API" ]; then
   MACHINE_ID_FILE="$WEB_DATA_DIR/et_machine_id"
   if [ ! -f "$MACHINE_ID_FILE" ]; then
@@ -127,8 +116,6 @@ if [ "$WEB_ENABLE" = "true" ] || [ -n "$WEB_REMOTE_API" ]; then
   ARGS+=("--machine-id" "$MACHINE_ID")
 fi
 
-# Log the final command before replacing the shell process
 log "[Core] Executing command: $(format_cmd easytier-core "${ARGS[@]}" "${CORE_EXTRA_ARGS[@]}")"
 
-# Execute the core process as PID 1, passing the extra command-line arguments
 exec easytier-core "${ARGS[@]}" "${CORE_EXTRA_ARGS[@]}"
